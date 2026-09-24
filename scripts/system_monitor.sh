@@ -1,24 +1,24 @@
 #!/bin/bash
 
-# ==============================================================================
-# Task 2: Build a System Health Monitor (Thresholds & Conditionals)
-# ==============================================================================
-
-# 1. Enforce safety and data validation standards
+# Enforce strict safety and failure intercept rules
 set -e
 set -u
 set -o pipefail
 
-# 2. Define warning baseline thresholds
+# 1. ROBUST VALIDATION: Verify threshold definition parameters exist safely
 DISK_THRESHOLD=80
 ALERT_STATUS=0
+
+if [ -z "${DISK_THRESHOLD}" ] || [ "${DISK_THRESHOLD}" -le 0 ]; then
+    echo "🚨 FATAL CONFIG ERROR: System threshold parameter validation failed."
+    exit 1
+fi
 
 echo "📊 Gathering real-time Mac system health metrics..."
 echo "=================================================="
 
-# 3. Assess Hard Drive Disk Capacity Natively
-# Extracts the capacity percentage of your primary boot partition
-CURRENT_DISK_USAGE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
+# 2. Assess Hard Drive Disk Capacity Natively
+CURRENT_DISK_USAGE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//' || true)
 echo "💾 Primary Hard Drive Disk Usage: ${CURRENT_DISK_USAGE}%"
 
 if [ "$CURRENT_DISK_USAGE" -gt "$DISK_THRESHOLD" ]; then
@@ -30,13 +30,13 @@ fi
 
 echo "--------------------------------------------------"
 
-# 4. Identify Top Resource-Consuming Running Processes
+# 3. Identify Top Resource-Consuming Running Processes
 echo "🔥 Top 3 Running Tasks by CPU Processing Allocation:"
-ps -Ao pcpu,comm -r | head -n 4
+ps -Ao pcpu,comm -r | head -n 4 || true
 
 echo "=================================================="
 
-# 5. Evaluate overall health assessment signal via standard Exit Codes
+# 4. Evaluate overall health assessment signal via standard Exit Codes
 if [ "$ALERT_STATUS" -ne 0 ]; then
     echo "⚠️ System health inspection finished with warnings detected."
     exit 1
@@ -44,5 +44,3 @@ else
     echo "🎉 System health check complete! Everything is running smoothly."
     exit 0
 fi
-
-
